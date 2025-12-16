@@ -16,6 +16,15 @@
 char *help();
 uint8_t *makePacket(char *mac);
 
+inline uint8_t ctoi(const char c) {
+  if (c >= 'a')
+    return c - 'a' + 10;
+  else if (c >= 'A')
+    return c - 'A' + 10;
+  else
+    return c - '0';
+}
+
 int main(int argc, char *argv[]) {
   if (argc <= 1) {
     help();
@@ -25,8 +34,6 @@ int main(int argc, char *argv[]) {
   printf("mac: %s\n", argv[1]);
 
   uint8_t *packet = makePacket(argv[1]);
-
-  printf("packet: %s", packet);
 
   int socketfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (socketfd == -1) {
@@ -38,6 +45,7 @@ int main(int argc, char *argv[]) {
       .sin_family = AF_INET,
       .sin_port = htons(9),
   };
+  // TODO: make me generic
   inet_aton("10.0.69.255", &addr.sin_addr);
 
   // int sendres = sendto(socketfd, packet, sizeof(packet), 0,
@@ -53,38 +61,37 @@ char *help() {}
 
 // FIXME: exit if unparsable
 inline uint8_t *makePacket(char *mac) {
-  // TODO: convert char to hex or something better idk
-  static uint8_t macBuffer[MAC_SIZE * 6];
-  uint8_t oct1 = (mac[0] << 4) ^ mac[1];
-  uint8_t oct2 = (mac[3] << 4) ^ mac[4];
-  uint8_t oct3 = (mac[6] << 4) ^ mac[7];
-  uint8_t oct4 = (mac[9] << 4) ^ mac[10];
-  uint8_t oct5 = (mac[12] << 4) ^ mac[13];
-  uint8_t oct6 = (mac[14] << 4) ^ mac[15];
-
-  printf("1: %x\n", (uint8_t)2);
-  printf("2: %x\n", (uint8_t)2 << 4);
-  printf("3: %x\n", ((uint8_t)2 << 4) ^ 0);
-  printf("mac[0] mac[1]: %x and %x | %d and %d | %c and %c \n", mac[0], mac[1],
-         mac[0], mac[1], mac[0], mac[1]);
-  printf("oct1: %x | %d\n", oct1, oct1);
-
   uint8_t newMac[MAC_SIZE];
-  memcpy(newMac, &oct1, 8);
-  memcpy(newMac + 1, &oct2, 8);
-  memcpy(newMac + 2, &oct3, 8);
+  uint8_t oct1 = (ctoi(mac[0]) << 4) ^ ctoi(mac[1]);
+  uint8_t oct2 = (ctoi(mac[3]) << 4) ^ ctoi(mac[4]);
+  uint8_t oct3 = (ctoi(mac[6]) << 4) ^ ctoi(mac[7]);
+  uint8_t oct4 = (ctoi(mac[9]) << 4) ^ ctoi(mac[10]);
+  uint8_t oct5 = (ctoi(mac[12]) << 4) ^ ctoi(mac[13]);
+  uint8_t oct6 = (ctoi(mac[15]) << 4) ^ ctoi(mac[16]);
 
-  memcpy(newMac + 3, &oct4, 8);
-  memcpy(newMac + 4, &oct5, 8);
-  memcpy(newMac + 5, &oct6, 8);
+  memcpy(newMac, &oct1, 1);
+  memcpy(newMac + 1, &oct2, 1);
+  memcpy(newMac + 2, &oct3, 1);
+  memcpy(newMac + 3, &oct4, 1);
+  memcpy(newMac + 4, &oct5, 1);
+  memcpy(newMac + 5, &oct6, 1);
 
-  static uint8_t pack[WOL_SIZE] = {
+  static uint8_t packet[WOL_SIZE] = {
       0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
   };
 
-  for (size_t i = 0; i < 6; i++) {
-    memcpy(macBuffer + 6 + i, newMac, MAC_SIZE);
+  for (size_t i = 0; i < 16; i++) {
+    memcpy(packet + (i * 6) + 6, newMac, MAC_SIZE);
   }
 
-  return pack;
+  // printf("\n");
+  // for (int i = 0; i < WOL_SIZE; i++) {
+  //   printf("%-3d ", packet[i]);
+  //   if (i % 6 == 0) {
+  //     printf("\n");
+  //   }
+  // }
+  // printf("\n");
+
+  return packet;
 }
