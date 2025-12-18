@@ -1,3 +1,4 @@
 *.o
+build/
 cwol
 .DS_Store

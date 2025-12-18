@@ -1,18 +1,33 @@
-CC      := clang
-CFLAGS  := -Os -Wall -Wextra
-TARGET  := cwol
-SRC     := main.c
+CC       ?= clang
+CFLAGS   ?= -Os -Wall -Wextra
+LDFLAGS  ?= -lsqlite3
+TARGET   := cwol
+OBJDIR   := build
+SRC      := $(wildcard *.c)
+HEADERS  := $(wildcard *.h)
+OBJ      := $(patsubst %.c, $(OBJDIR)/%.o, $(SRC))
 
-.PHONY: all run clean
+.PHONY: all run install clean 
 
 all: $(TARGET)
 
 run: all
 	./$(TARGET)
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(OBJDIR)/%.o: %.c $(HEADERS) | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+install: all
+	install -Dm755 $(TARGET) $(DESTDIR)/usr/bin
+
+$(OBJDIR):
+	mkdir -p $@
 
 clean:
-	rm -f $(TARGET)
+	rm -rf $(TARGET) $(OBJDIR)
 
+clean_db:
+	rm -rf ~/.local/share/cwol && ./setup.sh
