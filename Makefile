@@ -1,5 +1,5 @@
 CC       ?= clang
-CFLAGS   ?= -Os -Wall -Wextra
+CFLAGS   ?= -Os -Wall -Wextra -DDEBUG
 LDFLAGS  ?= -lsqlite3
 TARGET   := cwol
 OBJDIR   := build

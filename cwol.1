@@ -1,0 +1,61 @@
+.TH CWOL 1 "December 2025" "1.0" "CWOL Manual"
+.SH NAME
+cwol \- C Wake-on-LAN utility
+.SH SYNOPSIS
+.B cwol
+.RI [ mac-address ]
+.br
+.B cwol
+.RB [ a " | " add ]
+.I host
+.I mac-address
+.br
+.B cwol
+.RB [ r " | " remove ]
+.I host
+.br
+.B cwol
+.RB [ h " | " help ]
+.SH DESCRIPTION
+.B cwol
+is a simple Wake-on-LAN utility. It allows sending magic packets to wake up devices on the local network.
+.SH COMMANDS
+.TP
+.B [no arguments]
+If run without arguments, \fBcwol\fP launches in TUI mode.
+.TP
+.BR a ", " add " " \fIhost\fP " " \fImac-address\fP
+Add a host and its MAC address to the internal database.
+.TP
+.BR r ", " remove " " \fIhost\fP
+Remove a host from the internal database.
+.TP
+.BR h ", " help
+Display help message.
+.SH EXAMPLES
+.B Send a packet to a specific address:
+.RS
+cwol 00:11:22:33:44:55
+.RE
+.PP
+.B Add a MAC address to the database:
+.RS
+cwol add my-pc 00:11:22:33:44:55
+.RE
+.PP
+.B Remove a host from the database:
+.RS
+cwol remove my-pc
+.RE
+.PP
+.B Open the TUI:
+.RS
+cwol
+.RE
+.SH FILES
+.I ~/.local/share/cwol/cwol.db
+.RS
+SQLite database storing the saved MAC addresses.
+.RE
+.SH AUTHORS
+Anthony

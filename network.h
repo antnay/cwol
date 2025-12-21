@@ -15,7 +15,8 @@
 
 uint8_t ctoi(const char c);
 void send_packet(char *mac);
-uint8_t *make_packet(char *mac);
+uint8_t *parse_mac(char *mac, uint8_t *mac_buf);
+uint8_t *make_packet(char *mac, uint8_t *packet);
 char *get_broadcast(int socketfd);
 
 #endif // !_NETWORK_H_
