@@ -106,11 +106,20 @@ char *get_broadcast() {
     if (ifa->ifa_addr == NULL)
       continue;
 
+#if defined(__APPLE__)
     if (ifa->ifa_addr->sa_family == AF_INET &&
         (ifa->ifa_flags & IFF_BROADCAST) && (ifa->ifa_flags & IFF_UP)) {
       struct sockaddr_in *sa = (struct sockaddr_in *)ifa->ifa_broadaddr;
       strlcpy(broadcast_ip, inet_ntoa(sa->sin_addr), INET_ADDRSTRLEN);
       freeifaddrs(ifap);
+
+#elif defined(__linux__)
+    if (ifa->ifa_addr->sa_family == AF_INET &&
+        (ifa->ifa_flags & IFF_BROADCAST) && (ifa->ifa_flags & IFF_UP)) {
+      struct sockaddr_in *sa = (struct sockaddr_in *)ifa->ifa_broadaddr;
+      strlcpy(broadcast_ip, inet_ntoa(sa->sin_addr), INET_ADDRSTRLEN);
+      freeifaddrs(ifap);
+#endif
 
 #ifdef DEBUG
       printf("broadcast: %s (interface: %s)\n", broadcast_ip, ifa->ifa_name);
