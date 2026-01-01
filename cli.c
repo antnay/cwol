@@ -12,17 +12,11 @@ void parse_args(int argc, char *argv[]) {
     if (database == NULL) {
       return;
     }
-    Macs *macs = db_get_macs(database);
-    if (macs == NULL) {
-      fprintf(stderr, "No hosts found or database error\n");
-      return;
-    }
-    Dropdown *dropdown = create_dropdown(macs->hosts, macs->total);
+    Dropdown *dropdown = create_dropdown(database);
     int selected = run_dropdown(dropdown);
     printf(CLEAR_SCREEN);
     if (selected >= 0)
-      printf("You selected: %s %s\n", macs->hosts[selected],
-             macs->macs[selected]);
+      printf("%s %s\n", dropdown->hosts[selected], dropdown->macs[selected]);
 
     free_dropdown(dropdown);
     break;
@@ -44,7 +38,7 @@ void parse_args(int argc, char *argv[]) {
     } else if (strcmp(argv[1], "help") == 0 || strcmp(argv[1], "h") == 0) {
       printf("%s\n", help_commands());
     } else {
-      send_packet(argv[1]);
+      process_mac(argv[1]);
     }
     break;
   }

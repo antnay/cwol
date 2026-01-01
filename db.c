@@ -27,6 +27,7 @@ sqlite3 *db() {
   return db;
 }
 
+
 int db_save_mac(sqlite3 *db, char *host, uint8_t *mac) {
   sqlite3_stmt *stmt;
   int rc = sqlite3_prepare_v2(
@@ -45,6 +46,9 @@ int db_save_mac(sqlite3 *db, char *host, uint8_t *mac) {
   }
 
   sqlite3_finalize(stmt);
+#ifdef DEBUG
+  printf("Saved host: %s\n", host);
+#endif /* ifdef DEBUG */
   return 0;
 }
 
@@ -62,6 +66,9 @@ int db_remove_mac(sqlite3 *db, char *host) {
   sqlite3_step(stmt);
 
   sqlite3_finalize(stmt);
+#ifdef DEBUG
+  printf("Removed host: %s\n", host);
+#endif /* ifdef DEBUG */
   return 0;
 }
 

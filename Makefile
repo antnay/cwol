@@ -1,5 +1,5 @@
 CC       ?= clang
-CFLAGS   ?= -Os -Wall -Wextra -DDEBUG
+CFLAGS   ?= -Os -Wall -Wextra
 LDFLAGS  ?= -lsqlite3
 TARGET   := cwol
 OBJDIR   := build
@@ -21,7 +21,7 @@ $(OBJDIR)/%.o: %.c $(HEADERS) | $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 install: all
-	install -Dm755 $(TARGET) $(DESTDIR)/usr/bin
+	install $(TARGET) /usr/local/bin
 
 $(OBJDIR):
 	mkdir -p $@

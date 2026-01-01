@@ -12,28 +12,10 @@ inline uint8_t ctoi(const char c) {
     return c - '0';
 }
 
-void send_packet(char *mac) {
+void process_mac(char *mac) {
   uint8_t packet[WOL_SIZE];
   make_packet(mac, packet);
-
-  int socketfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (socketfd == -1) {
-    perror("error making socket");
-  }
-  int opt = 1;
-  setsockopt(socketfd, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(&opt));
-  struct sockaddr_in addr = {
-      .sin_family = AF_INET,
-      .sin_port = htons(9),
-  };
-  inet_aton(get_broadcast(socketfd), &addr.sin_addr);
-  // inet_aton("10.0.69.255", &addr.sin_addr);
-
-  // int sendres = sendto(socketfd, packet, WOL_SIZE, 0,
-  //                      (const struct sockaddr *)&addr, sizeof(addr));
-  // if (sendres == -1) {
-  //   perror("error sending packet");
-  // }
+  send_packet(packet);
 }
 
 inline uint8_t *parse_mac(char *mac, uint8_t *mac_buf) {
@@ -55,6 +37,31 @@ inline uint8_t *parse_mac(char *mac, uint8_t *mac_buf) {
   memcpy(mac_buf + 5, &oct6, 1);
 
   return mac_buf;
+}
+
+void send_packet(uint8_t *mac) {
+  int socketfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (socketfd == -1) {
+    perror("error making socket");
+  }
+  int opt = 1;
+  setsockopt(socketfd, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(opt));
+  struct sockaddr_in addr = {
+      .sin_family = AF_INET,
+      .sin_port = htons(9),
+  };
+  char *broadcast_ip = get_broadcast();
+  if (broadcast_ip == NULL) {
+    fprintf(stderr, "Error: Could not get broadcast address\n");
+    return;
+  }
+  inet_aton(broadcast_ip, &addr.sin_addr);
+
+  int sendres = sendto(socketfd, mac, WOL_SIZE, 0,
+                       (const struct sockaddr *)&addr, sizeof(addr));
+  if (sendres == -1) {
+    perror("error sending packet");
+  }
 }
 
 // creates a wake on lan packet with given mac address returns an array of uint8
@@ -86,29 +93,32 @@ inline uint8_t *make_packet(char *mac, uint8_t *packet) {
   return packet;
 }
 
-char *get_broadcast(int socketfd) {
-  struct ifreq ifr;
-  struct sockaddr_in *addr;
-  char *broadcast;
+char *get_broadcast() {
+  static char broadcast_ip[INET_ADDRSTRLEN];
+  struct ifaddrs *ifap, *ifa;
 
-  if (socketfd == -1) {
-    perror("error making socket");
+  if (getifaddrs(&ifap) == -1) {
+    perror("getifaddrs");
     return NULL;
   }
 
-  memset(&ifr, 0, sizeof(ifr));
-  ifr.ifr_addr.sa_family = AF_INET;
+  for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == NULL)
+      continue;
 
-  if (ioctl(socketfd, SIOCGIFBRDADDR, &ifr) == -1) {
-    perror("error getting broadcast address");
-    return NULL;
-  }
+    if (ifa->ifa_addr->sa_family == AF_INET &&
+        (ifa->ifa_flags & IFF_BROADCAST) && (ifa->ifa_flags & IFF_UP)) {
+      struct sockaddr_in *sa = (struct sockaddr_in *)ifa->ifa_broadaddr;
+      strlcpy(broadcast_ip, inet_ntoa(sa->sin_addr), INET_ADDRSTRLEN);
+      freeifaddrs(ifap);
 
-  addr = (struct sockaddr_in *)&ifr.ifr_addr;
-  broadcast = (char *)&addr->sin_addr;
 #ifdef DEBUG
-  printf("broadcast: %s\n", broadcast);
-#endif /* ifdef DEBUG */
+      printf("broadcast: %s (interface: %s)\n", broadcast_ip, ifa->ifa_name);
+#endif
+      return broadcast_ip;
+    }
+  }
 
-  return broadcast;
+  freeifaddrs(ifap);
+  return NULL;
 }
